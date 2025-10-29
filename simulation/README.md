@@ -124,7 +124,7 @@ Navigate to the ROS2 workspace and build all packages:
 
 ```bash
 # Navigate to the ROS2 workspace
-cd ~/Programming/urc-drone/simulation/ros2_ws
+cd ~/urc-drone/simulation/ros2_ws
 
 # Source ROS2 environment
 source /opt/ros/jazzy/setup.bash
@@ -141,7 +141,7 @@ colcon build
 source install/setup.bash
 
 # Add workspace sourcing to bashrc for convenience
-echo "source ~/Programming/urc-drone/simulation/ros2_ws/install/setup.bash" >> ~/.bashrc
+echo "source ~/urc-drone/simulation/ros2_ws/install/setup.bash" >> ~/.bashrc
 ```
 
 ## ROS2 Package Overview
@@ -166,7 +166,7 @@ Use the integrated launch file that starts everything automatically:
 
 ```bash
 # Terminal 1: Launch complete simulation system
-cd ~/Programming/urc-drone/simulation/ros2_ws
+cd ~/urc-drone/simulation/ros2_ws
 source install/setup.bash
 ros2 launch drone_bringup sim_bringup.launch.py
 ```
@@ -183,14 +183,14 @@ If you prefer manual control or need to troubleshoot, use separate terminals:
 
 #### Terminal 1: Gazebo Simulation
 ```bash
-cd ~/Programming/urc-drone/simulation/ros2_ws
+cd ~/urc-drone/simulation/ros2_ws
 source install/setup.bash
 ros2 launch drone_gazebo simulation.launch.py
 ```
 
 #### Terminal 2: Drone Control System (after Gazebo is running)
 ```bash
-cd ~/Programming/urc-drone/simulation/ros2_ws
+cd ~/urc-drone/simulation/ros2_ws
 source install/setup.bash
 ros2 launch drone_control control.launch.py
 ```
@@ -202,7 +202,7 @@ For development and testing individual components:
 #### Test Simple Takeoff Node
 ```bash
 # Ensure Gazebo, ArduPilot, and MAVROS are running first
-cd ~/Programming/urc-drone/simulation/ros2_ws
+cd ~/urc-drone/simulation/ros2_ws
 source install/setup.bash
 ros2 run simple_offboard takeoff_node
 ```
@@ -210,7 +210,7 @@ ros2 run simple_offboard takeoff_node
 #### Manual Component Startup
 ```bash
 # Terminal 1: Gazebo only
-gz sim -v4 -r ~/Programming/urc-drone/simulation/ros2_ws/src/drone_gazebo/worlds/iris_runway.sdf
+gz sim -v4 -r ~/urc-drone/simulation/ros2_ws/src/drone_gazebo/worlds/iris_runway.sdf
 
 # Terminal 2: ArduPilot SITL
 cd ~/ardupilot
@@ -221,7 +221,7 @@ source /opt/ros/jazzy/setup.bash
 ros2 launch mavros apm.launch fcu_url:=udp://127.0.0.1:14550@
 
 # Terminal 4: Individual nodes
-cd ~/Programming/urc-drone/simulation/ros2_ws
+cd ~/urc-drone/simulation/ros2_ws
 source install/setup.bash
 ros2 run drone_control mission_manager_node
 # or
@@ -284,7 +284,7 @@ ros2 service call /mavros/set_mode mavros_msgs/srv/SetMode "{custom_mode: 'GUIDE
 4. **Build errors**:
    ```bash
    # Clean and rebuild
-   cd ~/Programming/urc-drone/simulation/ros2_ws
+   cd ~/urc-drone/simulation/ros2_ws
    rm -rf build install log
    colcon build
    ```
@@ -303,7 +303,7 @@ Check log files for detailed error information:
 ls ~/.ros/log/
 
 # Colcon build logs
-cd ~/Programming/urc-drone/simulation/ros2_ws
+cd ~/urc-drone/simulation/ros2_ws
 ls log/latest_build/
 ```
 
