@@ -1,0 +1,3 @@
+float32 pan_range
+float32 tilt_range
+float32 scan_speed
