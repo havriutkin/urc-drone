@@ -16,7 +16,6 @@ echo ""
 # Check if we're in the right directory
 if [ ! -f "src/drone_bringup/package.xml" ]; then
     echo -e "${RED}Error: Must be run from ros2_ws directory${NC}"
-    echo "Usage: cd ~/Programming/urc-drone/simulation/ros2_ws && ./build.sh"
     exit 1
 fi
 
