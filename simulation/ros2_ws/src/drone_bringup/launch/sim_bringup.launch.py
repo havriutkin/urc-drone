@@ -41,4 +41,25 @@ def generate_launch_description():
             ],
             output='screen',
         ),
+        
+        # ROS-Gazebo bridge for rangefinder sensor (Gazebo -> ROS2)
+        Node(
+            package='ros_gz_bridge',
+            executable='parameter_bridge',
+            arguments=[
+                '/rangefinder@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan',
+            ],
+            remappings=[
+                ('/rangefinder', '/rangefinder_gz'),
+            ],
+            output='screen',
+        ),
+        
+        # Rangefinder bridge (converts LaserScan to Range and publishes to MAVROS)
+        Node(
+            package='drone_hardware',
+            executable='rangefinder_bridge',
+            name='rangefinder_bridge',
+            output='screen',
+        ),
     ])

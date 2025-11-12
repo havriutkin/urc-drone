@@ -8,9 +8,9 @@ endif()
 # Find ament_cmake to add install targets
 find_package(ament_cmake REQUIRED)
 
-# Install the launch and worlds directories
+# Install the launch, worlds, and config directories
 install(
-  DIRECTORY launch worlds
+  DIRECTORY launch worlds config
   DESTINATION share/${PROJECT_NAME}
 )
 

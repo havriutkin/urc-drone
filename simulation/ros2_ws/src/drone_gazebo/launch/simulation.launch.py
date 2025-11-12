@@ -33,6 +33,11 @@ def generate_launch_description():
     # Path to the MAVROS launch file - use system installation since it's not in conda
     # MAVROS is installed via apt at /opt/ros/jazzy
     mavros_launch_path = '/opt/ros/jazzy/share/mavros/launch/apm.launch'
+    
+    # Path to our custom MAVROS config for distance sensor
+    mavros_config_path = os.path.join(
+        get_package_share_directory('drone_gazebo'),
+        'config', 'mavros_config.yaml')
 
     return LaunchDescription([
         # Set GZ_SIM_RESOURCE_PATH to include workspace models
@@ -78,6 +83,7 @@ def generate_launch_description():
                     AnyLaunchDescriptionSource(mavros_launch_path),
                     launch_arguments={
                         'fcu_url': 'udp://127.0.0.1:14550@',
+                        'config_yaml': mavros_config_path,
                         'time_timesync_rate': '0.0',  # Disable timesync for simulation
                         'time_timesync_avg_alpha': '0.6',
                         'conn_timeout': '30.0',  # Increase connection timeout for slow simulation
