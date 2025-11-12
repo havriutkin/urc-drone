@@ -21,9 +21,6 @@ setup(
     maintainer_email='havriutkin@gmail.com',
     description='High-level control nodes for the drone.',
     license='Apache-2.0',
-    extras_require={
-        'test': ['pytest'],
-    },
     entry_points={
         'console_scripts': [
             'mission_manager_node = drone_control.mission_manager:main',
