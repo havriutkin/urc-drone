@@ -8,6 +8,7 @@ find_package(rosidl_default_generators REQUIRED)
 # Generate messages, services, etc.
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/ScanPattern.msg"
+  "srv/SetGimbalAttitude.srv"
   # Add other .msg, .srv, .action files here
 )
 

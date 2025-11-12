@@ -1,0 +1,8 @@
+# Request: desired gimbal angles in degrees
+float32 pitch  # Pitch angle in degrees (-135 to +45)
+float32 roll   # Roll angle in degrees (-30 to +30)
+float32 yaw    # Yaw angle in degrees (-160 to +160)
+---
+# Response: success status
+bool success
+string message
