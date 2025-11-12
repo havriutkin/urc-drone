@@ -25,6 +25,8 @@ setup(
     },
     entry_points={
         'console_scripts': [
+            'gimbal_bridge_sim = drone_hardware.gimbal_bridge_sim:main',
+            'gimbal_bridge_real = drone_hardware.gimbal_bridge_real:main',
         ],
     },
 )
