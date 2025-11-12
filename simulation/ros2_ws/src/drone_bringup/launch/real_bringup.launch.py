@@ -2,6 +2,7 @@
 
 from launch import LaunchDescription
 from launch.actions import IncludeLaunchDescription
+from launch_ros.actions import Node
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from ament_index_python.packages import get_package_share_directory
 import os
@@ -19,6 +20,15 @@ def generate_launch_description():
 
         # Starts your mission_manager and geolocation nodes
         IncludeLaunchDescription(PythonLaunchDescriptionSource(control_launch_path)),
+        
+        # Gimbal bridge for real hardware (MAVROS -> Servo commands)
+        Node(
+            package='drone_hardware',
+            executable='gimbal_bridge_real',
+            name='gimbal_bridge_real',
+            output='screen',
+            parameters=[],
+        ),
         
         # You would also launch the real MAVROS node here, configured for your flight controller's serial port
     ])

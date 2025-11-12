@@ -2,6 +2,7 @@
 
 from launch import LaunchDescription
 from launch.actions import IncludeLaunchDescription
+from launch_ros.actions import Node
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from ament_index_python.packages import get_package_share_directory
 import os
@@ -19,4 +20,25 @@ def generate_launch_description():
 
         # Starts your mission_manager and geolocation nodes
         IncludeLaunchDescription(PythonLaunchDescriptionSource(control_launch_path)),
+        
+        # Gimbal bridge for simulation (MAVROS -> ROS2 gimbal topics)
+        Node(
+            package='drone_hardware',
+            executable='gimbal_bridge_sim',
+            name='gimbal_bridge_sim',
+            output='screen',
+            parameters=[],
+        ),
+        
+        # ROS-Gazebo bridge for gimbal control (ROS2 -> Gazebo transport)
+        Node(
+            package='ros_gz_bridge',
+            executable='parameter_bridge',
+            arguments=[
+                '/gimbal/cmd_pitch@std_msgs/msg/Float64@gz.msgs.Double',
+                '/gimbal/cmd_roll@std_msgs/msg/Float64@gz.msgs.Double',
+                '/gimbal/cmd_yaw@std_msgs/msg/Float64@gz.msgs.Double',
+            ],
+            output='screen',
+        ),
     ])
