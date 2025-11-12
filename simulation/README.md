@@ -120,22 +120,22 @@ source ~/.bashrc
 
 ### 8. Build the ROS2 Workspace
 
-Navigate to the ROS2 workspace and build all packages:
+Navigate to the ROS2 workspace and build all packages using the provided build script:
 
 ```bash
 # Navigate to the ROS2 workspace
 cd ~/urc-drone/simulation/ros2_ws
 
-# Source ROS2 environment
-source /opt/ros/jazzy/setup.bash
-
-# Install dependencies using rosdep
+# Install dependencies using rosdep (first time only)
 sudo rosdep init  # Only run this once
 rosdep update
 rosdep install --from-paths src --ignore-src -r -y
 
-# Build all packages
-colcon build
+# Build all packages using the automated build script
+./build.sh
+
+# For a clean rebuild (removes build/, install/, log/ directories)
+./build.sh clean
 
 # Source the workspace
 source install/setup.bash
@@ -143,6 +143,8 @@ source install/setup.bash
 # Add workspace sourcing to bashrc for convenience
 echo "source ~/urc-drone/simulation/ros2_ws/install/setup.bash" >> ~/.bashrc
 ```
+
+**Note:** The `build.sh` script automatically handles Python package executable installation issues. See [Build System Documentation](ros2_ws/BUILD_README.md) for details.
 
 ## ROS2 Package Overview
 
@@ -160,12 +162,38 @@ The workspace contains the following packages:
 
 You have multiple options to run the simulation:
 
-### Option 1: Complete System Launch (Recommended)
+### Option 1: Quick Launch Script (Recommended for Development)
 
-Use the integrated launch file that starts everything automatically:
+Use the convenience script that handles environment setup and launches the complete system:
 
 ```bash
-# Terminal 1: Launch complete simulation system
+cd ~/urc-drone/simulation
+./launch_simulation_clean.sh
+```
+
+**What this script does:**
+1. **Environment Cleanup**: Unsets problematic Snap-related environment variables (GTK, GDK, etc.) that can cause GUI issues
+2. **Library Path Management**: Filters out Snap paths from `LD_LIBRARY_PATH` and prioritizes system libraries
+3. **Workspace Build Check**: Automatically builds the workspace if `install/` directory doesn't exist
+4. **Complete System Launch**: Starts all components (Gazebo, ArduPilot SITL, MAVROS, control nodes)
+
+**When to use this script:**
+- **Recommended**: Running VS Code as a Snap package (most Ubuntu installations)
+- First time launching after a fresh clone
+- Encountering GTK/GUI-related errors
+- Workspace not yet built
+
+**When NOT to use this script:**
+- VS Code installed via apt/deb package (system-wide installation)
+- Already sourced the workspace and no environment conflicts
+- Need more control over individual component startup
+
+### Option 2: Direct ROS2 Launch
+
+Use the integrated launch file directly (requires pre-sourced environment):
+
+```bash
+# Launch complete simulation system
 cd ~/urc-drone/simulation/ros2_ws
 source install/setup.bash
 ros2 launch drone_bringup sim_bringup.launch.py
@@ -175,9 +203,9 @@ This will automatically start:
 1. Gazebo simulation with the iris_runway world
 2. ArduPilot SITL (after 3 seconds)
 3. MAVROS connection (after 10 seconds)
-4. Drone control nodes (mission manager and geolocation)
+4. Drone control nodes (mission manager, geolocation, gimbal bridge)
 
-### Option 2: Manual Step-by-Step Launch
+### Option 3: Manual Step-by-Step Launch
 
 If you prefer manual control or need to troubleshoot, use separate terminals:
 
@@ -195,7 +223,7 @@ source install/setup.bash
 ros2 launch drone_control control.launch.py
 ```
 
-### Option 3: Individual Component Testing
+### Option 4: Individual Component Testing
 
 For development and testing individual components:
 
@@ -265,23 +293,67 @@ ros2 service call /mavros/cmd/arming mavros_msgs/srv/CommandBool "{value: true}"
 ros2 service call /mavros/set_mode mavros_msgs/srv/SetMode "{custom_mode: 'GUIDED'}"
 ```
 
+## Gimbal Control
+
+### Setting Gimbal Parameters
+
+If gimbal control is not working properly, you can set the ArduPilot gimbal parameters while the simulation is running:
+
+```bash
+cd ~/urc-drone/simulation
+./set_gimbal_params_live.sh
+```
+
+This script configures:
+- `MNT1_TYPE = 1` (servo gimbal)
+- `MNT1_DEFLT_MODE = 3` (MAVLink targeting)
+- Servo channel assignments (SERVO8-10 for roll/pitch/yaw)
+- Gimbal angle limits
+
+**Note:** These parameters are usually pre-configured in `~/ardupilot/mav.parm` and persist across simulation runs. The live script is only needed if parameters get reset or for troubleshooting.
+
+### Testing Gimbal Control
+
+Test the gimbal using mission_manager services:
+
+```bash
+# Set gimbal to specific angles (pitch, roll, yaw in degrees)
+ros2 service call /mission_manager/set_gimbal_attitude \
+  drone_interfaces/srv/SetGimbalAttitude \
+  "{pitch: -45.0, roll: 0.0, yaw: 30.0}"
+
+# Set gimbal to random position
+ros2 service call /mission_manager/random_gimbal std_srvs/srv/Trigger
+
+# Run smooth rotation test (30 seconds)
+ros2 service call /mission_manager/test_gimbal std_srvs/srv/Trigger
+```
+
+For more details on gimbal architecture and troubleshooting, see [Gimbal Bridge Documentation](GIMBAL_BRIDGE.md).
+
 ## Troubleshooting
 
 ### Common Issues
 
-1. **ArduPilot path not found**: 
+1. **GTK/GUI errors or Gazebo crashes on startup**:
+   - **Cause**: VS Code Snap package sets conflicting environment variables
+   - **Solution**: Use `./launch_simulation_clean.sh` instead of direct ros2 launch
+   - The script automatically cleans up Snap-related paths and environment variables
+   - Alternatively, install VS Code via apt/deb package instead of Snap
+
+2. **ArduPilot path not found**: 
    - Ensure ArduPilot is cloned to `~/ardupilot`
    - Update the path in `simulation.launch.py` if installed elsewhere
 
-2. **MAVROS connection fails**:
+3. **MAVROS connection fails**:
    - Verify ArduPilot SITL is running and listening on port 14550
    - Check firewall settings: `sudo ufw allow 14550`
 
-3. **Gazebo world not found**:
+4. **Gazebo world not found**:
    - Ensure all packages are built successfully
    - Check world file exists in `drone_gazebo/worlds/`
 
-4. **Build errors**:
+5. **Build errors**:
    ```bash
    # Clean and rebuild
    cd ~/urc-drone/simulation/ros2_ws
@@ -289,11 +361,20 @@ ros2 service call /mavros/set_mode mavros_msgs/srv/SetMode "{custom_mode: 'GUIDE
    colcon build
    ```
 
-5. **Missing dependencies**:
+6. **Missing dependencies**:
    ```bash
    # Reinstall dependencies
    rosdep install --from-paths src --ignore-src -r -y
    ```
+
+7. **Workspace not building with launch_simulation_clean.sh**:
+   - The script only builds if `install/` doesn't exist
+   - For clean rebuild, delete the directory first:
+     ```bash
+     cd ~/urc-drone/simulation/ros2_ws
+     rm -rf build/ install/ log/
+     ```
+   - Or use the build script directly: `./build.sh clean`
 
 ### Log Files
 
