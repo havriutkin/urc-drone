@@ -1,33 +1,52 @@
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import ExecuteProcess, IncludeLaunchDescription, TimerAction
-from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.actions import ExecuteProcess, IncludeLaunchDescription, TimerAction, SetEnvironmentVariable
+from launch.launch_description_sources import AnyLaunchDescriptionSource
 
 def generate_launch_description():
 
-    # Set the ardupilot path - make it more flexible
-    # First try environment variable, then fall back to relative path
-    ardupilot_dir = '/home/havri/ardupilot'
-    """
-    ardupilot_dir = os.environ.get('ARDUPILOT_DIR')
-    if not ardupilot_dir:
-        # Assume ardupilot is in the parent directory of ros2_ws
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        ardupilot_dir = os.path.join(current_dir, '../../../../ardupilot')
-        ardupilot_dir = os.path.abspath(ardupilot_dir)
-    """
-
+    # Set the ardupilot path - try environment variable first, then fall back to default
+    ardupilot_dir = os.environ.get('ARDUPILOT_DIR', os.path.expanduser('~/ardupilot'))
+    ardupilot_tools = os.path.join(ardupilot_dir, 'Tools', 'autotest')
+    
     # Path to your custom world file
     world_path = os.path.join(
         get_package_share_directory('drone_gazebo'),
         'worlds', 'iris_runway.sdf')
 
-    # Path to the MAVROS launch file
-    mavros_launch_path = os.path.join(
-        get_package_share_directory('mavros'), 'launch', 'apm.launch')
+    # Get the drone_description share directory for models
+    drone_description_share = get_package_share_directory('drone_description')
+    drone_models_path = os.path.join(drone_description_share, 'models')
+    
+    # Setup Gazebo resource paths
+    # Combine existing GZ_SIM_RESOURCE_PATH with our workspace models
+    existing_gz_resource_path = os.environ.get('GZ_SIM_RESOURCE_PATH', '')
+    ardupilot_gazebo_models = os.path.expanduser('~/ardupilot_gazebo/models')
+    
+    # Build the complete resource path (workspace models : ardupilot models : existing)
+    gz_resource_paths = [drone_models_path, ardupilot_gazebo_models]
+    if existing_gz_resource_path:
+        gz_resource_paths.append(existing_gz_resource_path)
+    gz_sim_resource_path = ':'.join(gz_resource_paths)
+    
+    # Path to the MAVROS launch file - use system installation since it's not in conda
+    # MAVROS is installed via apt at /opt/ros/jazzy
+    mavros_launch_path = '/opt/ros/jazzy/share/mavros/launch/apm.launch'
 
     return LaunchDescription([
+        # Set GZ_SIM_RESOURCE_PATH to include workspace models
+        SetEnvironmentVariable(
+            name='GZ_SIM_RESOURCE_PATH',
+            value=gz_sim_resource_path
+        ),
+        
+        # Add ArduPilot tools to PATH for sim_vehicle.py
+        SetEnvironmentVariable(
+            name='PATH',
+            value=ardupilot_tools + ':' + os.environ.get('PATH', '')
+        ),
+        
         # 1. Start Gazebo simulation first
         ExecuteProcess(
             cmd=['gz', 'sim', '-v4', '-r', world_path],
@@ -51,12 +70,19 @@ def generate_launch_description():
         ),
 
         # 3. Start MAVROS after ArduPilot is ready
+        # Note: Using XML launch file format since MAVROS is installed system-wide
         TimerAction(
             period=10.0,
             actions=[
                 IncludeLaunchDescription(
-                    PythonLaunchDescriptionSource(mavros_launch_path),
-                    launch_arguments={'fcu_url': 'udp://127.0.0.1:14550'}.items()
+                    AnyLaunchDescriptionSource(mavros_launch_path),
+                    launch_arguments={
+                        'fcu_url': 'udp://127.0.0.1:14550@',
+                        'time_timesync_rate': '0.0',  # Disable timesync for simulation
+                        'time_timesync_avg_alpha': '0.6',
+                        'conn_timeout': '30.0',  # Increase connection timeout for slow simulation
+                        'param_use_mission_item_int': 'true'
+                    }.items()
                 )
             ]
         ),

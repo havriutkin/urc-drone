@@ -1,0 +1,36 @@
+# ArduPilot Gimbal/Mount Parameters for Servo-Controlled Gimbal
+
+# Mount Type: 1 = Servo (Type 1)
+MNT1_TYPE,1
+
+# Servo channels for gimbal control
+# These map to the servo outputs that control the gimbal
+MNT1_PITCH_SRV,9    # Servo channel for pitch control
+MNT1_ROLL_SRV,10    # Servo channel for roll control  
+MNT1_YAW_SRV,11     # Servo channel for yaw control
+
+# Gimbal angle limits (in degrees)
+# Pitch limits: -90 (looking down) to +25 (looking up is typical for camera gimbals)
+MNT1_PITCH_MIN,-90
+MNT1_PITCH_MAX,25
+
+# Roll limits: ±30 degrees (typical for stabilization)
+MNT1_ROLL_MIN,-30
+MNT1_ROLL_MAX,30
+
+# Yaw limits: ±180 degrees (full rotation)
+MNT1_YAW_MIN,-180
+MNT1_YAW_MAX,180
+
+# Stabilization settings
+# 0 = none, 1 = stabilize, 2 = mount/gimbal targeting
+MNT1_DEFLT_MODE,2
+
+# Retract/Neutral positions (degrees)
+MNT1_NEUTRAL_X,0    # Roll neutral
+MNT1_NEUTRAL_Y,0    # Pitch neutral  
+MNT1_NEUTRAL_Z,0    # Yaw neutral
+
+# Lead filter to compensate for vehicle motion
+MNT1_LEAD_RLL,0.0
+MNT1_LEAD_PTCH,0.0
