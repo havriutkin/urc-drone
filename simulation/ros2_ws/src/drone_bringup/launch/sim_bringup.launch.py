@@ -35,9 +35,9 @@ def generate_launch_description():
             package='ros_gz_bridge',
             executable='parameter_bridge',
             arguments=[
-                '/gimbal/cmd_pitch@std_msgs/msg/Float64@gz.msgs.Double',
-                '/gimbal/cmd_roll@std_msgs/msg/Float64@gz.msgs.Double',
-                '/gimbal/cmd_yaw@std_msgs/msg/Float64@gz.msgs.Double',
+                '/gimbal/cmd_pitch@std_msgs/msg/Float64]gz.msgs.Double',
+                '/gimbal/cmd_roll@std_msgs/msg/Float64]gz.msgs.Double',
+                '/gimbal/cmd_yaw@std_msgs/msg/Float64]gz.msgs.Double',
             ],
             output='screen',
         ),

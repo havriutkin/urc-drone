@@ -162,7 +162,7 @@
       
       <!-- Direction indicator (red arrow showing where rangefinder points) -->
       <visual name="rangefinder_direction_arrow">
-        <pose>0 0 0.05 1.5708 0 0</pose> <!-- Rotated to point forward along X axis -->
+        <pose>0 0 0.05 0 0 0</pose> <!-- No rotation: arrow points along X axis -->
         <geometry>
           <cylinder>
             <radius>0.002</radius>
