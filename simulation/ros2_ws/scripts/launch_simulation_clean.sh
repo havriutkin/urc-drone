@@ -1,10 +1,7 @@
 #!/bin/bash
 # Conda base environment launcher for drone simulation
 # This script launches the simulation using conda base environment with system ROS2
-
-# Activate conda base environment
-#eval "$(conda shell.bash hook)"
-#conda activate base
+# Try this script if regular command fails
 
 # Unset problematic snap-related GTK/GDK environment variables
 unset GTK_PATH GTK_EXE_PREFIX GIO_MODULE_DIR GTK_IM_MODULE_FILE LOCPATH GSETTINGS_SCHEMA_DIR
@@ -19,15 +16,6 @@ fi
 
 # Source ROS2 Jazzy (this will add ROS2 libraries to LD_LIBRARY_PATH)
 source /opt/ros/jazzy/setup.bash
-
-# Navigate to workspace
-cd /home/havri/Programming/urc-drone/simulation/ros2_ws
-
-# Build workspace if needed
-if [ ! -d "install" ]; then
-    echo "Building workspace..."
-    colcon build
-fi
 
 # Source workspace
 source install/setup.bash
