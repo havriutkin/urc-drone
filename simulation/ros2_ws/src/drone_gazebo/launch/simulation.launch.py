@@ -64,7 +64,8 @@ def generate_launch_description():
             actions=[
                 ExecuteProcess(
                     cmd=[
-                        'sim_vehicle.py', '-v', 'ArduCopter',
+                        'xterm', '-e', 'sim_vehicle.py', '-v', 'ArduCopter',
+                        '--out', '127.0.0.1:14550',
                         '-f', 'gazebo-iris', '--model', 'JSON',
                         '--map', '--console'
                     ],

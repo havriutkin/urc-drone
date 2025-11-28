@@ -25,6 +25,8 @@ setup(
         'console_scripts': [
             'mission_manager_node = drone_control.mission_manager:main',
             'geolocation_node = drone_control.geolocation_node:main',
+            'auto_collector_node = drone_control.auto_collector:main',
+            'inference_node = drone_control.inference_node:main',
         ],
     },
 )

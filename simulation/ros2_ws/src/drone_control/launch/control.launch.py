@@ -15,5 +15,18 @@ def generate_launch_description():
             executable='geolocation_node',
             name='geolocation'
         ),
-        # add the object_detector_node here later
+        # 3. Auto Collector (The new logic we wrote)
+        Node(
+            package='drone_control',
+            executable='auto_collector_node',
+            name='auto_collector',
+            output='screen' # Important to see logs
+        ),
+        # 4. Inference Node (GTSAM placeholder)
+        Node(
+            package='drone_control',
+            executable='inference_node',
+            name='inference_node',
+            output='screen'
+        ),
     ])

@@ -166,7 +166,7 @@
         <geometry>
           <cylinder>
             <radius>0.002</radius>
-            <length>0.03</length>
+            <length>50.0</length>
           </cylinder>
         </geometry>
         <material>
@@ -194,6 +194,12 @@
         <update_rate>20</update_rate>
         <always_on>true</always_on>
         <visualize>true</visualize>
+
+        <noise>
+          <type>gaussian</type>
+          <mean>0.0</mean>
+          <stddev>0.15</stddev> 
+        </noise>
         
         <lidar>
           <scan>
