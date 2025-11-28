@@ -132,10 +132,10 @@ rosdep update
 rosdep install --from-paths src --ignore-src -r -y
 
 # Build all packages using the automated build script
-./build.sh
+./scripts/build.sh
 
 # For a clean rebuild (removes build/, install/, log/ directories)
-./build.sh clean
+./scripts/build.sh clean
 
 # Source the workspace
 source install/setup.bash
@@ -162,20 +162,28 @@ The workspace contains the following packages:
 
 You have multiple options to run the simulation:
 
-### Option 1: Quick Launch Script (Recommended for Development)
-
-Use the convenience script that handles environment setup and launches the complete system:
+### Option 1: Regular launch (Recommended)
+Use the usual ROS2 launch command.
 
 ```bash
 cd ~/urc-drone/simulation
-./launch_simulation_clean.sh
+source /opt/ros/jazzy/setup.bash
+ros2 launch drone_bringup sim_bringup.launch.py
 ```
+
+### Option 2: Launch Script
+If option 1 fails, you can try custom script:
+
+```bash
+cd ~/urc-drone/simulation/ros2_ws
+./scripts/launch_simulation_clean.sh
+```
+
 
 **What this script does:**
 1. **Environment Cleanup**: Unsets problematic Snap-related environment variables (GTK, GDK, etc.) that can cause GUI issues
 2. **Library Path Management**: Filters out Snap paths from `LD_LIBRARY_PATH` and prioritizes system libraries
-3. **Workspace Build Check**: Automatically builds the workspace if `install/` directory doesn't exist
-4. **Complete System Launch**: Starts all components (Gazebo, ArduPilot SITL, MAVROS, control nodes)
+3. **Complete System Launch**: Starts all components (Gazebo, ArduPilot SITL, MAVROS, control nodes)
 
 **When to use this script:**
 - **Recommended**: Running VS Code as a Snap package (most Ubuntu installations)
@@ -187,23 +195,6 @@ cd ~/urc-drone/simulation
 - VS Code installed via apt/deb package (system-wide installation)
 - Already sourced the workspace and no environment conflicts
 - Need more control over individual component startup
-
-### Option 2: Direct ROS2 Launch
-
-Use the integrated launch file directly (requires pre-sourced environment):
-
-```bash
-# Launch complete simulation system
-cd ~/urc-drone/simulation/ros2_ws
-source install/setup.bash
-ros2 launch drone_bringup sim_bringup.launch.py
-```
-
-This will automatically start:
-1. Gazebo simulation with the iris_runway world
-2. ArduPilot SITL (after 3 seconds)
-3. MAVROS connection (after 10 seconds)
-4. Drone control nodes (mission manager, geolocation, gimbal bridge)
 
 ### Option 3: Manual Step-by-Step Launch
 
