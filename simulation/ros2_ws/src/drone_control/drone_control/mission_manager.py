@@ -15,8 +15,41 @@ import time
 
 class MissionManagerNode(Node):
     """
-    Mission Manager for autonomous drone operations.
-    Provides services to control the drone (arm, takeoff, land, set mode).
+    The MissionManagerNode is the central control node for autonomous drone operations in the ROS2-based drone system.
+
+    This node acts as an interface between high-level mission commands and the MAVROS/MAVLink stack, providing
+    essential drone control services such as arming, takeoff, landing, mode changes, and gimbal control.
+
+    Key responsibilities:
+    - Arming and disarming the drone motors
+    - Executing takeoff and landing sequences
+    - Changing flight modes (GUIDED, LOITER, etc.)
+    - Controlling gimbal orientation for camera pointing
+    - Monitoring drone state, GPS, and local position
+    - Providing service interfaces for mission coordination
+
+    The node integrates with:
+    - MAVROS for MAVLink communication with the flight controller
+    - ArduPilot for low-level flight control
+
+    Subscribed topics:
+    - /mavros/state: Current flight state (armed, mode, etc.)
+    - /mavros/global_position/global: GPS coordinates
+    - /mavros/local_position/pose: Local position and orientation
+
+    Published topics:
+    - /mavros/mount_control/command: Gimbal control commands
+
+    Services provided:
+    - mission_manager/start_mission: Trigger autonomous mission execution
+    - mission_manager/arm: Arm the drone
+    - mission_manager/takeoff: Initiate takeoff
+    - mission_manager/land: Execute landing
+    - mission_manager/set_mode: Change flight mode
+    - mission_manager/set_gimbal_attitude: Control gimbal angles
+
+    This node also provides few debugging services, such as 
+    test_gimbal and random_gimbal.
     """
     
     def __init__(self):

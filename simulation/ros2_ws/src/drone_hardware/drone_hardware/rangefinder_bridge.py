@@ -12,6 +12,28 @@ import math
 
 
 class RangefinderBridge(Node):
+    """
+    The RangefinderBridge node acts as a hardware abstraction layer for rangefinder sensors.
+
+    This node bridges rangefinder data from Gazebo or real hardware to standardized
+    ROS2 sensor messages. It converts LaserScan messages from Gazebo's ros_gz_bridge to Range
+    messages that are compatible with MAVROS and ROS2.
+
+    Key functionalities:
+    - Subscribes to Gazebo LaserScan topics for simulated rangefinder data
+    - Converts LaserScan to Range messages with appropriate field mappings
+    - Publishes Range messages for MAVROS distance sensor integration
+    - Handles range limits and validity checks
+
+    The node ensures consistent rangefinder data format across simulation and real-world deployments,
+    enabling seamless transition between testing environments and actual drone operations.
+
+    Subscribed topics:
+    - /rangefinder_gz: LaserScan from Gazebo simulation
+
+    Published topics:
+    - /mavros/distance_sensor/rangefinder_sub: Range message for MAVROS
+    """
     def __init__(self):
         super().__init__('rangefinder_bridge')
         

@@ -17,15 +17,30 @@ import math
 
 class GimbalBridgeSim(Node):
     """
-    Bridge node that converts MAVROS mount control messages to Gazebo gimbal commands.
-    
-    Subscribes to:
-        /mavros/mount_control/command (mavros_msgs/MountControl) - Mount control commands
-    
-    Publishes to:
-        /gimbal/cmd_pitch (std_msgs/Float64) - Gazebo gimbal pitch command
-        /gimbal/cmd_roll (std_msgs/Float64) - Gazebo gimbal roll command  
-        /gimbal/cmd_yaw (std_msgs/Float64) - Gazebo gimbal yaw command
+    The GimbalBridgeSim node provides gimbal control bridging.
+
+    This node acts as the simulation implementation of the gimbal bridge architecture,
+    converting high-level MAVROS mount control commands into Gazebo-compatible gimbal
+    commands. It handles the translation between MAVROS MountControl messages
+    and individual joint position commands for the gimbal in Gazebo.
+
+    Key functionalities:
+    - Subscribes to MAVROS mount control commands for gimbal orientation
+    - Converts quaternion or Euler angle commands to individual joint angles
+    - Publishes separate pitch, roll, and yaw commands to Gazebo joint controllers
+    - Handles coordinate frame transformations between MAVROS and Gazebo conventions
+    - Provides simulation-specific gimbal behavior and constraints
+
+    The node is part of the gimbal bridge abstraction layer, ensuring identical
+    high-level gimbal control interfaces work in both simulation and real hardware.
+
+    Subscribed topics:
+    - /mavros/mount_control/command: MountControl messages from MAVROS
+
+    Published topics:
+    - /gimbal/cmd_pitch: Float64 pitch angle for Gazebo
+    - /gimbal/cmd_roll: Float64 roll angle for Gazebo
+    - /gimbal/cmd_yaw: Float64 yaw angle for Gazebo
     """
     
     def __init__(self):

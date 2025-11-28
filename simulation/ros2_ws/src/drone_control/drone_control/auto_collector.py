@@ -21,6 +21,36 @@ def quaternion_to_rotation_matrix(q):
     ])
 
 class AutoCollector(Node):
+    """
+    The AutoCollector node implements an autonomous data collection algorithm.
+
+    This node implements the "stop-and-stare" data collection strategy, where the drone moves to predefined waypoints,
+    hovers at each location, aims the gimbal towards an estimated target position (e.g., a cube or landmark),
+    and records sensor data including pose, gimbal angles, range measurements, and GPS coordinates.
+
+    The collected data is used for subsequent GTSAM-based factor graph optimization.
+
+    Key features:
+    - Autonomous waypoint navigation in GUIDED mode
+    - Integration with MAVROS for drone control
+    - Service-based mission start trigger
+    - Automatic inference triggering upon mission completion
+
+    The node subscribes to:
+    - /mavros/local_position/pose: Drone pose
+    - /mavros/distance_sensor/rangefinder_sub: Range measurements
+    - /mavros/mount_control/command: Gimbal commands (for initial aiming)
+    - /mavros/global_position/global: GPS data
+
+    Publishes to:
+    - /mavros/setpoint_position/local: Position setpoints
+
+    Services:
+    - /start_collection: Trigger to start mission
+    - /mavros/set_mode: Mode changes
+    - /run_gtsam_inference: Inference trigger
+    - mission_manager/set_gimbal_attitude: Gimbal control
+    """
     def __init__(self):
         super().__init__('auto_collector')
 
@@ -118,7 +148,7 @@ class AutoCollector(Node):
     def control_loop(self):
         if self.state == "IDLE" or self.current_pose is None: return
 
-        # 1. State: MOVING
+        # State: MOVING
         if self.state == "MOVING":
             target = self.waypoints[self.current_wp_index]
             
@@ -141,7 +171,7 @@ class AutoCollector(Node):
                 self.state = "HOVERING"
                 self.hover_timer_count = 0
 
-        # 2. State: HOVERING (Aiming)
+        # State: HOVERING (Aiming)
         elif self.state == "HOVERING":
             # Keep sending position command to hold place
             target = self.waypoints[self.current_wp_index]

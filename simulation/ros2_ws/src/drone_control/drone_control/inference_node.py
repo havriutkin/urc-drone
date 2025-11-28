@@ -12,6 +12,24 @@ import gtsam
 from gtsam.symbol_shorthand import X, L # X = Pose, L = Landmark
 
 class InferenceNode(Node):
+    """
+    The InferenceNode performs factor graph based optimization using GTSAM for georeferencing.
+
+    This node implements the inference algorithm that processes collected sensor data to 
+    estimate the precise location of points of interest.
+    It uses GTSAM (Georgia Tech Smoothing and Mapping) library to construct and optimize factor graphs
+    representing the probabilistic relationships between drone poses, sensor measurements, and landmark positions.
+
+    Key features:
+    - Factor graph construction with pose and landmark variables
+    - Bearing-range factors for sensor measurements
+    - Prior factors for initial pose estimates
+    - Levenberg-Marquardt optimization for maximum likelihood estimation
+    - Automatic data loading from mission logs
+
+    Services:
+    - /run_gtsam_inference - Triggers optimization on collected data
+    """
     def __init__(self):
         super().__init__('inference_node')
         self.srv = self.create_service(Trigger, '/run_gtsam_inference', self.callback)
@@ -21,7 +39,7 @@ class InferenceNode(Node):
         self.get_logger().info("Trigger received! Loading Mission Data...")
         
         try:
-            # 1. Load Data
+            # Load Data
             # Ensure this matches where AutoCollector saves it
             import os
             home_path = os.path.expanduser("./")
@@ -35,10 +53,10 @@ class InferenceNode(Node):
 
             self.get_logger().info(f"Loaded {len(data)} measurements. Building Factor Graph...")
             
-            # 2. Run Optimization
+            # Run Optimization
             result_point = self.run_gtsam_optimization(data)
             
-            # 3. Report
+            # Report
             res_str = f"Cube Located at: X={result_point[0]:.2f}, Y={result_point[1]:.2f}, Z={result_point[2]:.2f}"
             self.get_logger().info("SUCCESS! " + res_str)
             
@@ -78,7 +96,7 @@ class InferenceNode(Node):
         for i, point in enumerate(data_points):
             POSE_KEY = X(i)
             
-            # 1. Extract Drone Pose
+            # Extract Drone Pose
             pos = point['drone_pos'] # [x, y, z]
             quat = point['drone_quat'] # [w, x, y, z]
             
@@ -87,16 +105,16 @@ class InferenceNode(Node):
             rot = gtsam.Rot3.Quaternion(quat[0], quat[1], quat[2], quat[3])
             pose = gtsam.Pose3(rot, gtsam.Point3(pos[0], pos[1], pos[2]))
             
-            # 2. Add Prior Factor (We trust where the drone says it is)
+            # Add Prior Factor (We trust where the drone says it is)
             graph.add(gtsam.PriorFactorPose3(POSE_KEY, pose, prior_noise))
             initial_estimates.insert(POSE_KEY, pose)
             
-            # 3. Extract Measurement
+            # Extract Measurement
             pitch_deg = point['gimbal_pitch']
             yaw_deg = point['gimbal_yaw']
             r = point['range']
             
-            # 4. Convert Angles to Unit3 Vector (Bearing)
+            # Convert Angles to Unit3 Vector (Bearing)
             # This must match the geometry that worked in your manual test
             # PITCH: Positive = Down => Z is negative
             p_rad = math.radians(pitch_deg)
@@ -110,7 +128,7 @@ class InferenceNode(Node):
             bearing_vector = gtsam.Point3(x_b, y_b, z_b)
             bearing_unit = gtsam.Unit3(bearing_vector)
             
-            # 5. Add BearingRange Factor
+            # Add BearingRange Factor
             # Connects Drone Pose X(i) -> Landmark L(0)
             graph.add(gtsam.BearingRangeFactor3D(
                 POSE_KEY, LANDMARK_KEY, bearing_unit, float(r), measurement_noise
@@ -176,7 +194,7 @@ class InferenceNode(Node):
         X = East (meters)
         Y = North (meters)
         """
-        # 1. Calculate distance and azimuth (bearing) from the reference
+        # Calculate distance and azimuth (bearing) from the reference
         # Distance is simply hypotenuse
         dist = math.sqrt(x*x + y*y)
         
@@ -185,7 +203,7 @@ class InferenceNode(Node):
         azimuth_rad = math.atan2(x, y) 
         azimuth_deg = math.degrees(azimuth_rad)
         
-        # 2. Use Geodesic library to compute the new coordinate
+        # Use Geodesic library to compute the new coordinate
         geod = Geodesic.WGS84
         # Direct computation: given lat1, lon1, azi1, s12 (distance), return lat2, lon2
         g = geod.Direct(ref_lat, ref_lon, azimuth_deg, dist)
