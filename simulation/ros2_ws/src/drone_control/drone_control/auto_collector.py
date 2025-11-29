@@ -58,7 +58,7 @@ class AutoCollector(Node):
 
         # --- Settings ---
         self.lateral_movement = 5.0 
-        self.hover_duration = 3.0 # Seconds to stare before recording
+        self.hover_duration = 5.0 # Seconds to stare before recording
         self.loop_rate = 10.0 # Hz
 
         # --- State ---
@@ -67,9 +67,15 @@ class AutoCollector(Node):
         self.current_range = -1.0
         self.last_manual_pitch = 0.0
         self.last_manual_yaw = 0.0
+
+        # --- Snapshot State (For Relative Updates) ---
+        self.initial_pose = None
+        self.initial_range = 0.0
+        self.initial_pitch = 0.0
+        self.initial_yaw = 0.0
         
         # --- Targets ---
-        self.estimated_cube_pos = None 
+        self.estimated_target_pos = None 
         self.waypoints = []
         self.current_wp_index = 0
         self.data_log = []
@@ -111,6 +117,41 @@ class AutoCollector(Node):
         y = xy_dist * math.sin(y_rad)
         return np.array([x, y, z])
 
+    def get_corrected_gimbal_angles(self, current_pose, initial_pose, initial_range, initial_pitch, initial_yaw):
+        """
+        Calculates new gimbal angles based on drone displacement relative to the initial look-vector.
+        """
+        # 1. Calculate the initial vector relative to the drone body (spherical to cartesian)
+        # Note: We use the stored initial pitch/yaw/range
+        body_vec_initial = self.get_body_vector(initial_pitch, initial_yaw, initial_range)
+
+        # 2. Rotate this vector into the World Frame (using initial drone orientation)
+        R_initial = quaternion_to_rotation_matrix(initial_pose.pose.orientation)
+        world_vec_initial = R_initial.dot(body_vec_initial)
+
+        # 3. Calculate Drone Displacement (How much we moved)
+        curr_p = np.array([current_pose.pose.position.x, current_pose.pose.position.y, current_pose.pose.position.z])
+        init_p = np.array([initial_pose.pose.position.x, initial_pose.pose.position.y, initial_pose.pose.position.z])
+        displacement = curr_p - init_p
+
+        # 4. The new vector to target is the Old Vector minus Displacement
+        # geometric logic: Target = Start + Vec => Vec_new = Target - New_Pos 
+        # => Vec_new = (Start + Vec) - (Start + Displacement) = Vec - Displacement
+        world_vec_new = world_vec_initial - displacement
+
+        # 5. Rotate this new vector back into the Current Body Frame
+        # We need the inverse (transpose) of the current orientation
+        R_current_inv = quaternion_to_rotation_matrix(current_pose.pose.orientation).T
+        body_vec_new = R_current_inv.dot(world_vec_new)
+
+        # 6. Convert back to Pitch/Yaw for the gimbal
+        x, y, z = body_vec_new
+        dist_xy = math.sqrt(x*x + y*y)
+        new_pitch = math.degrees(math.atan2(z, dist_xy))
+        new_yaw = math.degrees(math.atan2(y, x))
+
+        return new_pitch, new_yaw
+    
     def start_mission_callback(self, request, response):
         if self.current_pose is None:
             response.success = False; response.message = "No Pose Data"; return response
@@ -122,12 +163,17 @@ class AutoCollector(Node):
         # Estimate Cube
         # If range is invalid, we assume 25m as a fallback for testing geometry
         r_val = self.current_range if self.current_range < 50 else 25.0
+
+        self.initial_pose = self.current_pose       # Save the pose object
+        self.initial_range = r_val                  # Save the valid range
+        self.initial_pitch = self.last_manual_pitch # Save the manual pitch
+        self.initial_yaw = self.last_manual_yaw     # Save the manual yaw
         
         body_vec = self.get_body_vector(self.last_manual_pitch, self.last_manual_yaw, r_val)
         R = quaternion_to_rotation_matrix(self.current_pose.pose.orientation)
-        self.estimated_cube_pos = drone_pos + R.dot(body_vec)
+        self.estimated_target_pos = drone_pos + R.dot(body_vec)
         
-        self.get_logger().info(f"Target Cube: {self.estimated_cube_pos}")
+        self.get_logger().info(f"Ray Casting Approximation of the target: {self.estimated_target_pos}")
 
         # Define Waypoints: Current -> Left -> Right -> Center
         wp_center = drone_pos
@@ -183,8 +229,9 @@ class AutoCollector(Node):
             self.pos_pub.publish(ps)
 
             # Calculate Gimbal
+            """
             curr_pos = np.array([self.current_pose.pose.position.x, self.current_pose.pose.position.y, self.current_pose.pose.position.z])
-            vec_to_target_world = self.estimated_cube_pos - curr_pos
+            vec_to_target_world = self.estimated_target_pos - curr_pos
             R_inv = quaternion_to_rotation_matrix(self.current_pose.pose.orientation).T
             vec_body = R_inv.dot(vec_to_target_world)
             
@@ -192,6 +239,15 @@ class AutoCollector(Node):
             dist_xy = math.sqrt(x*x + y*y)
             pitch_deg = math.degrees(math.atan2(z, dist_xy))
             yaw_deg = math.degrees(math.atan2(y, x))
+            """
+
+            pitch_deg, yaw_deg = self.get_corrected_gimbal_angles(
+                self.current_pose, 
+                self.initial_pose, 
+                self.initial_range, 
+                self.initial_pitch, 
+                self.initial_yaw
+            )
             
             # Send Gimbal
             self.send_gimbal(pitch_deg, 0.0, yaw_deg)
