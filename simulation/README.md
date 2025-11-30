@@ -34,7 +34,7 @@ sudo dpkg -i /tmp/ros2-apt-source.deb
 
 # Install ROS2 Jazzy
 sudo apt update && sudo apt install ros-dev-tools 
-sudo apt install ros-jazzy-desktop
+sudo apt install ros-jazzy-desktop 
 
 # Set up environment
 echo "source /opt/ros/jazzy/setup.bash" >> ~/.bashrc
@@ -52,7 +52,7 @@ echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/pkgs-
 
 # Install Gazebo Harmonic
 sudo apt update
-sudo apt install gz-harmonic
+sudo apt install gz-harmonic ros-jazzy-ros-gz
 
 # Verify installation
 gz sim -v4 shapes.sdf
