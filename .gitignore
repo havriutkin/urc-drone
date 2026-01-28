@@ -175,3 +175,7 @@ cython_debug/
 #.idea/
 
 external/px4_ros_com
+
+simulation/ros2_ws/build/
+simulation/ros2_ws/install/
+simulation/ros2_ws/log/

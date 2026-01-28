@@ -1,0 +1,17 @@
+/**:
+  ros__parameters:
+    # Distance sensor / Rangefinder configuration
+    distance_sensor:
+      config: |
+        rangefinder_pub:
+          id: 0
+          frame_id: "rangefinder"
+          orientation: PITCH_270  # Downward facing by default
+          field_of_view: 0.0
+          send_tf: false
+          sensor_position: {x: 0.0, y: 0.0, z: 0.0}
+        
+        rangefinder_sub:
+          subscriber: true
+          id: 1
+          orientation: PITCH_270
